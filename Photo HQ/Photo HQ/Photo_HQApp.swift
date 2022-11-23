@@ -11,7 +11,7 @@ import SwiftUI
 struct Photo_HQApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HomeView()
         }
     }
 }
