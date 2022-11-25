@@ -12,6 +12,7 @@ import ImageIO
 class OptimizerViewModel: ObservableObject {
     @Published var convertedImage: UIImage?
     @Published var isOptimizing: Bool = false
+    @Published var originalImage: UIImage?
     
     var imageCropAndScaleOption: VNImageCropAndScaleOption = .scaleFill
     let configuration = MLModelConfiguration()
@@ -21,15 +22,23 @@ class OptimizerViewModel: ObservableObject {
             let visionModel = try VNCoreMLModel(for: Realesrgan512(configuration: configuration).model)
             
             let request = VNCoreMLRequest(model: visionModel, completionHandler: { request, error in
-                if let results = request.results as? [VNPixelBufferObservation],
-                   let pixelBuffer = results.first?.pixelBuffer {
-                    let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+                DispatchQueue.main.async { [weak self] in
+                    guard let self = self else { return }
                     
-                    let ciContext = CIContext()
-                    guard let safeCGImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else { return }
-                    let resultImage = UIImage(cgImage: safeCGImage)
+                    self.isOptimizing = true
                     
-                    self.convertedImage = resultImage
+                    if let results = request.results as? [VNPixelBufferObservation],
+                       let pixelBuffer = results.first?.pixelBuffer {
+                        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+                        
+                        let ciContext = CIContext()
+                        guard let safeCGImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else { return }
+                        let resultImage = UIImage(cgImage: safeCGImage)
+                        
+                        self.convertedImage = resultImage
+                    } else {
+                        self.isOptimizing = false
+                    }
                 }
             })
             
@@ -49,16 +58,20 @@ class OptimizerViewModel: ObservableObject {
         // To see what happens when the image orientation is wrong,
         // choose a fixed orientation value here:
         //let orientation = CGImagePropertyOrientation.up
-    //    DispatchQueue.global(qos: .background).async { [weak self] in
-     //       guard let self = self else { return }
-            
+        //    DispatchQueue.global(qos: .background).async { [weak self] in
+        //       guard let self = self else { return }
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
             let handler = VNImageRequestHandler(ciImage: ciImage, orientation: orientation)
             do {
+                
                 try handler.perform([self.visionRequest])
+                
             } catch {
                 print("Failed to perform prediction: \(error)")
             }
-    //    }
+        }
+        //    }
     }
 }
 

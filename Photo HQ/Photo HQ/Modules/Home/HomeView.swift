@@ -10,22 +10,34 @@ import SwiftUI
 struct HomeView: View {
     
     @StateObject var viewModel = OptimizerViewModel()
+    @State var selectPhoto: Bool = false
+    @State var showLoadingOverlay = false
+    
+    var screenWidth: CGFloat {
+        UIScreen.main.bounds.width
+    }
     
     var body: some View {
         NavigationView {
             VStack(spacing: 16) {
-                Image("singer")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 180, height: 250, alignment: .center)
-                Text("Original Image")
+                if let image = viewModel.originalImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 300, height: 300, alignment: .center)
+                        .clipped()
+                    Text("Original Image")
+                        .padding()
+                }
                 
                 if let image = viewModel.convertedImage {
                     Image(uiImage: image)
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 180, height: 250)
+                        .scaledToFill()
+                        .frame(width: 300, height: 300, alignment: .center)
+                        .clipped()
                     Text("Converted Image")
+                        .padding()
                 }
                 
                 Spacer()
@@ -33,18 +45,24 @@ struct HomeView: View {
             .padding()
             .navigationBarItems(
                 leading: Button(action: {
-                    // Actions
+                    selectPhoto = true
                 }, label: { Text("Select") })
                 .padding()
             )
             .navigationBarItems(
                 trailing: Button(action: {
-                    guard let image = UIImage(named: "singer") else { return }
+                    guard let image = viewModel.originalImage else { return }
                     viewModel.transformImage(image: image)
                 }, label: { Text("Optimize") })
                 .disabled(viewModel.isOptimizing)
                 .padding()
             )
+            .sheet(isPresented: $selectPhoto) {
+                PhotoPicker(showLoadingOverlay: $showLoadingOverlay, completion: { images in
+                    guard let image = images.first else { return }
+                    viewModel.originalImage = image
+                })
+            }
         }
     }
 }
