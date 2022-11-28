@@ -17,27 +17,41 @@ struct HomeView: View {
         UIScreen.main.bounds.width
     }
     
+    
     var body: some View {
         NavigationView {
             VStack(spacing: 16) {
                 if let image = viewModel.originalImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 300, height: 300, alignment: .center)
-                        .clipped()
+                    NavigationLink(destination: {
+                        ZoomableScrollView {
+                            Image(uiImage: image)
+                        }
+                    }, label: {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 200, height: 200)
+                            .border(Color.pink)
+                            .clipped()
+                    })
+                    .padding()
                     Text("Original Image")
-                        .padding()
                 }
                 
                 if let image = viewModel.convertedImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 300, height: 300, alignment: .center)
-                        .clipped()
+                    NavigationLink(destination: {
+                        ZoomableScrollView {
+                            Image(uiImage: image)
+                        }
+                    }, label: {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 200, height: 200)
+                            .border(Color.pink)
+                            .clipped()
+                    })
                     Text("Converted Image")
-                        .padding()
                 }
                 
                 Spacer()

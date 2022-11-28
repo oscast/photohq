@@ -34,8 +34,8 @@ class OptimizerViewModel: ObservableObject {
                         let ciContext = CIContext()
                         guard let safeCGImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else { return }
                         let resultImage = UIImage(cgImage: safeCGImage)
-                        
                         self.convertedImage = resultImage
+                        self.isOptimizing = false
                     } else {
                         self.isOptimizing = false
                     }
@@ -54,24 +54,16 @@ class OptimizerViewModel: ObservableObject {
         
         isOptimizing = true
         let orientation = CGImagePropertyOrientation(image.imageOrientation)
-        
-        // To see what happens when the image orientation is wrong,
-        // choose a fixed orientation value here:
-        //let orientation = CGImagePropertyOrientation.up
-        //    DispatchQueue.global(qos: .background).async { [weak self] in
-        //       guard let self = self else { return }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             let handler = VNImageRequestHandler(ciImage: ciImage, orientation: orientation)
             do {
-                
                 try handler.perform([self.visionRequest])
                 
             } catch {
                 print("Failed to perform prediction: \(error)")
             }
         }
-        //    }
     }
 }
 
@@ -85,14 +77,22 @@ extension CGImagePropertyOrientation {
      */
     init(_ orientation: UIImage.Orientation) {
         switch orientation {
-        case .up: self = .up
-        case .upMirrored: self = .upMirrored
-        case .down: self = .down
-        case .downMirrored: self = .downMirrored
-        case .left: self = .left
-        case .leftMirrored: self = .leftMirrored
-        case .right: self = .right
-        case .rightMirrored: self = .rightMirrored
+        case .up:
+            self = .up
+        case .upMirrored:
+            self = .upMirrored
+        case .down:
+            self = .down
+        case .downMirrored:
+            self = .downMirrored
+        case .left:
+            self = .left
+        case .leftMirrored:
+            self = .leftMirrored
+        case .right:
+            self = .right
+        case .rightMirrored:
+            self = .rightMirrored
         @unknown default:
             fatalError()
         }
