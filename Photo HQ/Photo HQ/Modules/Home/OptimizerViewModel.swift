@@ -63,6 +63,7 @@ class OptimizerViewModel: ObservableObject {
         setImageProportions(for: image)
         isOptimizing = true
         let orientation = CGImagePropertyOrientation(image.imageOrientation)
+        
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             let handler = VNImageRequestHandler(ciImage: ciImage, orientation: orientation)
@@ -116,7 +117,7 @@ class OptimizerViewModel: ObservableObject {
        if(widthRatio > heightRatio) {
            newSize = CGSize(width: size.width * widthRatio, height: size.height * heightRatio)
        } else {
-           newSize = CGSize(width: size.width * heightRatio,  height: size.height * widthRatio)
+           newSize = CGSize(width: size.width * widthRatio,  height: size.height * heightRatio)
        }
        
        // This is the rect that we've calculated out and this is what is actually used below

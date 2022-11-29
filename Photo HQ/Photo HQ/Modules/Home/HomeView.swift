@@ -13,68 +13,84 @@ struct HomeView: View {
     @State var selectPhoto: Bool = false
     @State var showLoadingOverlay = false
     
-    var screenWidth: CGFloat {
-        UIScreen.main.bounds.width
-    }
-    
-    
     var body: some View {
         NavigationView {
-            VStack(spacing: 16) {
-                if let image = viewModel.originalImage {
-                    NavigationLink(destination: {
-                        ZoomableScrollView {
-                            Image(uiImage: image)
-                        }
-                    }, label: {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 200, height: 200)
-                            .border(Color.pink)
-                            .clipped()
-                    })
-                    .padding()
-                    Text("Original Image")
+            ScrollView {
+                VStack(spacing: 16) {
+                    if let image = viewModel.originalImage {
+                        ThumbnailView(image: image, text: "Original Photo")
+                    }
+                    
+                    if let image = viewModel.convertedImage {
+                        ThumbnailView(image: image, text: "Optimized Photo")
+                    }
+                    
+                    Spacer()
                 }
-                
-                if let image = viewModel.convertedImage {
-                    NavigationLink(destination: {
-                        ZoomableScrollView {
-                            Image(uiImage: image)
-                        }
-                    }, label: {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 200, height: 200)
-                            .border(Color.pink)
-                            .clipped()
+                .padding()
+                .navigationBarItems(
+                    leading: (
+                        Button(
+                            action: { selectPhoto = true},
+                            label: { Text("Select") }
+                        )
+                        .disabled(viewModel.isOptimizing)
+                        .padding()
+                    ),trailing: (
+                        Button(
+                            action: {
+                                guard let image = viewModel.originalImage else { return }
+                                viewModel.transformImage(image: image)
+                            },
+                            label: { Text("Optimize") }
+                        )
+                        .disabled(viewModel.isOptimizing)
+                        .padding()
+                    )
+                )
+                .sheet(isPresented: $selectPhoto) {
+                    PhotoPicker(showLoadingOverlay: $showLoadingOverlay, completion: { images in
+                        guard let image = images.first else { return }
+                        viewModel.originalImage = image
                     })
-                    Text("Converted Image")
                 }
-                
-                Spacer()
             }
-            .padding()
-            .navigationBarItems(
-                leading: Button(action: {
-                    selectPhoto = true
-                }, label: { Text("Select") })
-                .padding()
-            )
-            .navigationBarItems(
-                trailing: Button(action: {
-                    guard let image = viewModel.originalImage else { return }
-                    viewModel.transformImage(image: image)
-                }, label: { Text("Optimize") })
-                .disabled(viewModel.isOptimizing)
-                .padding()
-            )
-            .sheet(isPresented: $selectPhoto) {
-                PhotoPicker(showLoadingOverlay: $showLoadingOverlay, completion: { images in
-                    guard let image = images.first else { return }
-                    viewModel.originalImage = image
+        }
+    }
+    
+    struct ThumbnailView: View {
+        let image: UIImage
+        let text: String
+        var body: some View {
+            VStack(spacing: 8) {
+                NavigationLink(destination: {
+                    ZoomableScrollView {
+                        Image(uiImage: image)
+                            .padding()
+                    }
+                }, label: {
+                    VStack {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 300, height: 300)
+                            .border(Color.blue)
+                            .clipped()
+                            .clipShape(
+                                RoundedRectangle(
+                                    cornerRadius: 8.0,
+                                    style: .continuous
+                                )
+                            )
+                        
+                        Text(text)
+                            .foregroundColor(.white)
+                            .font(.system(.title3))
+                            .fontWeight(.medium)
+                            .frame(maxWidth: .infinity)
+                            .background(.blue)
+                            .cornerRadius(8)
+                    }
                 })
             }
         }

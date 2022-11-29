@@ -21,7 +21,7 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
     scrollView.delegate = context.coordinator  // for viewForZooming(in:)
     scrollView.maximumZoomScale = 20
       scrollView.minimumZoomScale = 0.1
-      scrollView.zoomScale = 0.1
+      scrollView.zoomScale = 0.2
     scrollView.bouncesZoom = true
 
     // create a UIHostingController to hold our SwiftUI content
