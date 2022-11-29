@@ -39,10 +39,16 @@ struct HomeView: View {
                     ),trailing: (
                         Button(
                             action: {
+                                if let optimizedImage = viewModel.convertedImage {
+                                    viewModel.saveImage(image: optimizedImage)
+                                    return
+                                }
+                                
                                 guard let image = viewModel.originalImage else { return }
-                                viewModel.transformImage(image: image)
+                                viewModel.optimizeImage(image)
+
                             },
-                            label: { Text("Optimize") }
+                            label: { Text(viewModel.convertedImage != nil ? "Save": "Optimize") }
                         )
                         .disabled(viewModel.isOptimizing)
                         .padding()

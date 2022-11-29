@@ -17,20 +17,27 @@ enum RatioType {
 class OptimizerViewModel: ObservableObject {
     @Published var convertedImage: UIImage?
     @Published var isOptimizing: Bool = false
-    @Published var originalImage: UIImage?
+    @Published var hasAlert: Bool = false
+    @Published var originalImage: UIImage? {
+        didSet {
+            convertedImage = nil
+        }
+    }
     
-    var imageCropAndScaleOption: VNImageCropAndScaleOption = .scaleFill
     let configuration = MLModelConfiguration()
-    
+    var imageCropAndScaleOption: VNImageCropAndScaleOption = .scaleFill
     var originalImageRatio: CGSize = .zero
-    
     var imageRatio: [RatioType: CGFloat] = [:]
+    var alertMessage: String = ""
+    
+    // MARK: - Image Results
     
     lazy var visionRequest: VNCoreMLRequest = {
         do {
             let visionModel = try VNCoreMLModel(for: Realesrgan512(configuration: configuration).model)
             
             let request = VNCoreMLRequest(model: visionModel, completionHandler: { request, error in
+                // I take the main thread again after getting a result or an error. The Cacao way.
                 DispatchQueue.main.async { [weak self] in
                     guard let self = self else { return }
                     
@@ -58,12 +65,15 @@ class OptimizerViewModel: ObservableObject {
         }
     }()
     
-    func transformImage(image: UIImage) {
+    // MARK: Image Optimization
+    
+    func optimizeImage(_ image: UIImage) {
         guard let ciImage = CIImage(image: image) else { return }
         setImageProportions(for: image)
         isOptimizing = true
         let orientation = CGImagePropertyOrientation(image.imageOrientation)
         
+        // I decided to use this to not block the Users UI because Vision uses Main Thread.
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self = self else { return }
             let handler = VNImageRequestHandler(ciImage: ciImage, orientation: orientation)
@@ -71,25 +81,17 @@ class OptimizerViewModel: ObservableObject {
                 try handler.perform([self.visionRequest])
                 
             } catch {
-                print("Failed to perform prediction: \(error)")
+                self.alertMessage = "Failed to perform prediction: \(error)"
+                self.hasAlert = true
             }
         }
     }
     
-    func resizeImageProportions(image: UIImage) {
-        guard let ratio = Array(imageRatio.keys).first, let value = imageRatio[ratio] else { return }
-        switch ratio {
-        case .width:
-            let width = image.size.width
-            let targetWidth = width * value
-            convertedImage = resizeImage(image: image, targetSize: CGSize(width: targetWidth, height: image.size.height))
-        case .height:
-            let height = image.size.height
-            let targetHeight = height * value
-            convertedImage = resizeImage(image: image, targetSize: CGSize(width: image.size.width, height: targetHeight))
-        }
+    func execute() {
+        
     }
     
+    // I save the old image proportions
     func setImageProportions(for image: UIImage) {
         if image.size.width > image.size.height {
             let ratio = image.size.height / image.size.width
@@ -106,31 +108,37 @@ class OptimizerViewModel: ObservableObject {
         }
     }
     
-    func resizeImage(image: UIImage, targetSize: CGSize) -> UIImage {
-       let size = image.size
-       
-       let widthRatio  = targetSize.width  / size.width
-       let heightRatio = targetSize.height / size.height
-       
-       // Figure out what our orientation is, and use that to form the rectangle
-       var newSize: CGSize
-       if(widthRatio > heightRatio) {
-           newSize = CGSize(width: size.width * widthRatio, height: size.height * heightRatio)
-       } else {
-           newSize = CGSize(width: size.width * widthRatio,  height: size.height * heightRatio)
-       }
-       
-       // This is the rect that we've calculated out and this is what is actually used below
-       let rect = CGRect(x: 0, y: 0, width: newSize.width, height: newSize.height)
-       
-       // Actually do the resizing to the rect using the ImageContext stuff
-       UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-       image.draw(in: rect)
-       let newImage = UIGraphicsGetImageFromCurrentImageContext()
-       UIGraphicsEndImageContext()
-       
-       return newImage!
-   }
+    // MARK: - Image Results Resize
+    
+    func resizeImageProportions(image: UIImage) {
+        guard let ratio = Array(imageRatio.keys).first, let value = imageRatio[ratio] else { return }
+        switch ratio {
+        case .width:
+            let width = image.size.width
+            let targetWidth = width * value
+            convertedImage = ImageResizer.resizeImage(image: image, targetSize: CGSize(width: targetWidth, height: image.size.height))
+        case .height:
+            let height = image.size.height
+            let targetHeight = height * value
+            convertedImage = ImageResizer.resizeImage(image: image, targetSize: CGSize(width: image.size.width, height: targetHeight))
+        }
+    }
+    
+    // MARK: - Save Image
+    
+    func saveImage(image: UIImage) {
+        UIImageWriteToSavedPhotosAlbum(image, self, #selector(image(_:didFinishSavingWithError:contextInfo:)), nil)
+    }
+    
+    @objc func image(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
+        if error != nil {
+            alertMessage = "Your Image could not be saved, please try again."
+        } else {
+            alertMessage = "Your Image was saved successfully!"
+        }
+        
+        hasAlert = true
+    }
 }
 
 extension CGImagePropertyOrientation {

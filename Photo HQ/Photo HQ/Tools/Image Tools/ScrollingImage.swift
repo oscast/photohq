@@ -47,7 +47,7 @@ struct ZoomableScrollView<Content: View>: UIViewRepresentable {
   // MARK: - Coordinator
 
   class Coordinator: NSObject, UIScrollViewDelegate {
-    var hostingController: UIHostingController<Content>
+    let hostingController: UIHostingController<Content>
 
     init(hostingController: UIHostingController<Content>) {
       self.hostingController = hostingController
