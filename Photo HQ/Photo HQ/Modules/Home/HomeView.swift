@@ -32,7 +32,9 @@ struct HomeView: View {
                     leading: (
                         Button(
                             action: { selectPhoto = true},
-                            label: { Text("Select") }
+                            label: { Text("Select Photo")
+                                    .fontWeight(.medium)
+                            }
                         )
                         .disabled(viewModel.isOptimizing)
                         .padding()
@@ -48,7 +50,9 @@ struct HomeView: View {
                                 viewModel.optimizeImage(image)
 
                             },
-                            label: { Text(viewModel.convertedImage != nil ? "Save": "Optimize") }
+                            label: { Text(viewModel.convertedImage != nil ? "Save": "Optimize")
+                                    .fontWeight(.medium)
+                            }
                         )
                         .disabled(viewModel.isOptimizing)
                         .padding()
@@ -59,6 +63,11 @@ struct HomeView: View {
                         guard let image = images.first else { return }
                         viewModel.originalImage = image
                     })
+                }
+                .alert(viewModel.alertMessage, isPresented: $viewModel.hasAlert) {
+                    Button("OK", role: .cancel) {
+                        viewModel.alertMessage = ""
+                    }
                 }
             }
         }

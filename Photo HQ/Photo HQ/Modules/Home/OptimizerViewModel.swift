@@ -14,7 +14,7 @@ enum RatioType {
     case height
 }
 
-class OptimizerViewModel: ObservableObject {
+class OptimizerViewModel: NSObject, ObservableObject {
     @Published var convertedImage: UIImage?
     @Published var isOptimizing: Bool = false
     @Published var hasAlert: Bool = false
