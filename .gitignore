@@ -146,3 +146,11 @@ xcuserdata
 **/xcshareddata/WorkspaceSettings.xcsettings
 
 # End of https://www.toptal.com/developers/gitignore/api/swift,swiftpackagemanager,cocoapods,xcode,macos
+
+# Keep the regenerated app project in source control, but not user-specific Xcode state.
+!Photo HQ.xcodeproj/
+!Photo HQ.xcodeproj/project.pbxproj
+!Photo HQ.xcodeproj/project.xcworkspace/
+!Photo HQ.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+Photo HQ.xcodeproj/xcuserdata/
+Photo HQ.xcodeproj/project.xcworkspace/xcuserdata/
